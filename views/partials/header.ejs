@@ -1,0 +1,36 @@
+<div class="search-pill" data-bs-toggle="modal" data-bs-target="#searchModal">
+  <span>Anywhere</span>
+  <span class="divider"></span>
+  <span>Any week</span>
+  <span class="divider"></span>
+  <span>Add guests</span>
+  <i class="fa-solid fa-magnifying-glass search-icon"></i>
+</div>
+
+<style>
+.search-pill {
+  background: white;
+  border-radius: 40px;
+  padding: 8px 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #ddd;
+  cursor: pointer;
+  transition: box-shadow .3s;
+}
+.search-pill:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+.search-pill .divider {
+  width: 1px;
+  height: 18px;
+  background: #ddd;
+}
+.search-icon {
+  background: #ff385c;
+  color: #fff;
+  padding: 8px;
+  border-radius: 50%;
+}
+</style>

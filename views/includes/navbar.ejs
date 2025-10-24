@@ -1,0 +1,126 @@
+<style>
+ .nav-link{
+   font-size: 1.05rem;
+   margin-left: 1rem;
+   margin-right: 1rem;
+   font-weight: 500;
+ }
+ .nav-link:hover{
+   color:#ffffff;
+ }
+ .nav-search-input { border-radius: 999px 0 0 999px; }
+ .nav-search-btn { border-radius: 0 999px 999px 0; }
+ .navbar-brand .fw-brand { color: #fff; }
+    .clearBtn {
+        border-radius: 0 999px 999px 0;
+    }
+    .navText {
+        font-size: 0.95rem;
+        font-weight: 500;
+        font: 1em sans-serif;
+    }
+ </style>
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+  <div class="container-fluid">
+     <a class="navbar-brand d-flex align-items-center" href="/listings">
+      <img 
+        src="/tripNestLogo.jpg" 
+        alt="TripNest Logo" 
+        width="40" 
+        height="40" 
+        class="d-inline-block align-text-top me-2 rounded-circle"
+      >
+      <span class="fw-bold">TripNest</span>
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+      <div class="navbar-nav">
+        <a class="nav-link" href="/listings">Explore</a>
+      </div>
+
+      <!-- Centered search form (visible on md+ screens) -->
+      <form id="nav-search-form" action="/listings" method="GET" class="d-none d-md-flex mx-auto w-50">
+        <div class="input-group shadow-sm navText" style="border-radius:999px; overflow:hidden;">
+          <input type="search" name="location" class="form-control nav-search-input" placeholder="Where?" aria-label="Search location">
+          <input type="date" name="checkin" class="form-control d-none d-lg-block" aria-label="Check-in">
+          <input type="date" name="checkout" class="form-control d-none d-lg-block" aria-label="Check-out">
+          <button class="btn btn-light nav-search-btn" type="submit">Search</button>
+          <button class="btn btn-outline-light clearBtn" type="button" id="nav-clear">Clear</button>
+        </div>
+      </form>
+     <div class="modal fade" id="searchModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content p-4">
+
+      <form action="/listings/search" method="GET">
+        <h4>Search</h4>
+
+        <div class="row mt-3">
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Where</label>
+            <input type="text" name="location" class="form-control" placeholder="Search destinations">
+          </div>
+
+          <div class="col-md-3 mb-3">
+            <label class="form-label">Check-in</label>
+            <input type="date" name="checkIn" class="form-control">
+          </div>
+
+          <div class="col-md-3 mb-3">
+            <label class="form-label">Check-out</label>
+            <input type="date" name="checkOut" class="form-control">
+          </div>
+
+          <!-- Guests removed for a simpler search UI -->
+        </div>
+
+        <div class="d-flex justify-content-end">
+          <button type="submit" class="btn btn-primary px-4">
+            Search
+          </button>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+</div>
+
+           <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="listings/new">Add Your Home</a>
+        <% if (typeof currentUser === 'undefined' || !currentUser) { %>
+          <a class="nav-link" href="/signup"><b>Sign Up</b></a>
+          <a class="nav-link" href="/login"><b>Login</b></a>
+        <% } else { %>
+          <a class="nav-link" href="/logout"><b>Log Out</b></a>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</nav>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('nav-search-form');
+    if (form) {
+      form.addEventListener('submit', function (e) {
+        const loc = (form.elements['location'] && form.elements['location'].value || '').trim();
+        const checkin = (form.elements['checkin'] && form.elements['checkin'].value || '').trim();
+        const checkout = (form.elements['checkout'] && form.elements['checkout'].value || '').trim();
+        const guests = (form.elements['guests'] && form.elements['guests'].value || '').trim();
+        if (!loc && !checkin && !checkout && !guests) {
+          e.preventDefault();
+          window.location.href = '/listings';
+        }
+      });
+    }
+    const clearBtn = document.getElementById('nav-clear');
+    if (clearBtn) {
+      clearBtn.addEventListener('click', function () {
+        if (form) form.reset();
+        window.location.href = '/listings';
+      });
+    }
+  });
+</script>

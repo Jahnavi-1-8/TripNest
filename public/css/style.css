@@ -1,0 +1,199 @@
+body{
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+
+}
+.container{
+    flex:1;
+}
+h1{
+    color: blue;
+}
+
+.font-plus-jakarta {
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-optical-sizing: auto; /* optional */
+  font-weight: 400; /* normal */
+  font-style: normal;
+}
+.font-plus-jakarta-bold {
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-weight: 700;
+}
+
+.f-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 1.5rem 0;
+    background-color: #f8f9fa;
+    color: #333;
+    text-align: center;
+    border-top: 1px solid #ddd;
+}
+
+.f-info-socials {
+    display: flex;
+    gap: 1rem;
+    font-size: 1.4rem;
+}
+
+.f-info-socials i:hover {
+    color: #0d6efd;
+    cursor: pointer;
+}
+
+.f-info-links {
+    display: flex;
+    gap: 1.5rem;
+}
+
+.f-info-links a {
+    text-decoration: none;
+    color: inherit;
+}
+
+.f-info-links a:hover {
+    text-decoration: underline;
+}
+/* ===== LISTINGS PAGE CARDS ===== */
+.listing-card {
+  border: none;
+  border-radius: 1rem;
+  overflow: hidden;
+  margin-bottom: 1rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  background-color: #fff;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.listing-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+/* Ensure consistent image height */
+.card-img-top {
+  height: 230px;
+  width: 100%;
+  object-fit: cover;
+}
+
+/* Card content */
+.card-body {
+  padding: 1rem 1.2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Text and title */
+.card-title {
+  font-weight: 600;
+  color: #0d6efd;
+  margin-bottom: 0.5rem;
+}
+
+.card-text {
+  color: #555;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+/* Button */
+.card .btn {
+  border-radius: 0.5rem;
+  font-weight: 500;
+}
+
+/* Remove underline on entire card link */
+.card-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Show Page */
+/* Show page styling */
+.show-container {
+  margin-top: 3rem;
+  margin-bottom: 3rem;
+}
+
+.show-card {
+  border: none !important;
+  border-radius: 1rem;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  background-color: #fff;
+}
+
+.show-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+}
+
+.show-img {
+  width: 100%;
+  height: 400px;
+  object-fit: cover;
+}
+
+.show-details {
+  margin-top: 1rem;
+}
+
+.show-details h2 {
+  font-size: 2rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.show-details p {
+  font-size: 1.1rem;
+  color: #555;
+  margin-bottom: 0.4rem;
+}
+
+.show-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.show-actions a,
+.show-actions button {
+  flex: 1;
+  border-radius: 0.5rem !important;
+}
+
+/* Review stars */
+.review-stars {
+  font-size: 1.1rem;
+  color: #ddd; /* base color for empty stars */
+}
+.review-stars .star {
+  margin-right: 0.15rem;
+  color: #ddd;
+}
+.review-stars .star.filled {
+  color: #f5c518; /* gold color */
+}
+/* Add this in public/css/style.css */
+.navbar-brand img {
+  object-fit: cover;
+  transition: transform 0.2s ease-in-out;
+}
+
+.navbar-brand img:hover {
+  transform: scale(1.05);
+}
+.booking-card {
+  border: 1px solid #ddd;
+  background: #ffffff;
+}
+
+

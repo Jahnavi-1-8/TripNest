@@ -1,0 +1,90 @@
+<% layout("/layouts/bolierplate") %>
+
+<div class="row">
+  <div class="col-8 offset-2">
+    <br/>
+    <h2>Create a New Listing</h2>
+    <form method="POST" action="/listings" class="needs-validation" novalidate enctype="multipart/form-data">
+  <!-- Title -->
+  <div class="mb-2">
+    <label for="title" class="form-label">Title:</label>
+    <input type="text" id="title" name="title" class="form-control" required>
+    <div class="invalid-feedback">Please provide a title.</div>
+  </div>
+
+  <!-- Description -->
+  <div class="mb-2">
+    <label for="description" class="form-label">Description:</label>
+  <textarea id="description" name="description" class="form-control" required></textarea>
+    <div class="invalid-feedback">Please provide a description.</div>
+  </div>
+
+<!-- Image -->
+  <div class="mb-2">
+    <label for="image" class="form-label">Upload Image :</label>
+  <input type="file" id="image" name="image" class="form-control" required>
+    <div class="invalid-feedback">Please provide an image </div>
+  </div>
+  <!-- Price -->
+  <div class="mb-2">
+    <label for="price" class="form-label">Price per night (&#8377;):</label>
+  <input type="number" id="price" name="price" class="form-control" min="0" required>
+    <div class="invalid-feedback">Please provide a valid price.</div>
+  </div>
+
+  <!-- Location and Country -->
+  <div class="row">
+    <div class="mb-2 col-md-4">
+      <label for="location" class="form-label">Location:</label>
+  <input type="text" id="location" name="location" class="form-control" required>
+      <div class="invalid-feedback">Please provide a location.</div>
+    </div>
+    <div class="mb-2 col-md-8">
+      <label for="country" class="form-label">Country:</label>
+          <input type="text" id="country" name="country" class="form-control" required>
+      <div class="invalid-feedback">Please provide a country.</div>
+    </div>
+  </div>
+
+  <!-- Map picker for precise coordinates -->
+  <div class="mb-3">
+    <label class="form-label">Pick location on map (optional but recommended):</label>
+    <div id="form-map" style="width:100%; height:300px; border-radius:8px; overflow:hidden; border:1px solid #ddd;"></div>
+    <input type="hidden" name="latitude" id="latitude" />
+    <input type="hidden" name="longitude" id="longitude" />
+    <div class="form-text">Click on the map to set the exact location. If left empty the system will try to geocode the location text.</div>
+  </div>
+
+  <button type="submit" class="btn btn-dark mt-3">Add</button>
+</form>
+
+  </div>
+</div>
+
+<br/>
+
+<script>
+  // Map picker for new listing
+  (function () {
+    const mapEl = document.getElementById('form-map');
+    if (!mapEl) return;
+    const init = () => {
+      if (typeof L === 'undefined') return false;
+      const map = L.map('form-map').setView([20.5937, 78.9629], 5);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
+      let marker;
+      function setMarker(lat, lon) {
+        if (marker) marker.setLatLng([lat, lon]);
+        else marker = L.marker([lat, lon]).addTo(map);
+        document.getElementById('latitude').value = lat;
+        document.getElementById('longitude').value = lon;
+      }
+      map.on('click', function (e) {
+        setMarker(e.latlng.lat, e.latlng.lng);
+      });
+      return true;
+    };
+    if (document.readyState === 'complete') init();
+    else window.addEventListener('load', function () { setTimeout(init, 250); });
+  })();
+</script>

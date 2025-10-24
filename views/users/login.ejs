@@ -1,0 +1,39 @@
+<% layout('layouts/bolierplate') %>
+<div class="row">
+  <div class="col-6 offset-2">
+    <h2 class="mt-4 mb-3">Login</h2>
+
+    <form action="/login" method="POST" class="needs-validation" novalidate>
+      <!-- Username -->
+      <div class="mb-3">
+        <label for="username" class="form-label">Username:</label>
+        <input 
+          type="text" 
+          id="username" 
+          name="username" 
+          class="form-control" 
+          required
+        >
+        <div class="invalid-feedback">
+          Please provide a username.
+        </div>
+      </div>
+      <!-- Password -->
+      <div class="mb-3">
+        <label for="password" class="form-label">Password:</label>
+        <input 
+          type="password" 
+          id="password" 
+          name="password" 
+          class="form-control" 
+          required
+        >
+        <div class="invalid-feedback">
+          Please provide a password.
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-success">Login</button>
+    </form>
+  </div>
+</div>

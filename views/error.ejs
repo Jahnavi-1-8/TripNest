@@ -1,0 +1,20 @@
+<% layout('/layouts/bolierplate') %>
+
+<div class="row mt-5">
+  <div class="col-md-8 offset-md-2">
+    <div class="card border-danger">
+      <div class="card-header bg-danger text-white">
+        <h5 class="mb-0">Error <%= statusCode || 500 %></h5>
+      </div>
+      <div class="card-body">
+        <p class="card-text text-muted"><%= message || 'Something went wrong' %></p>
+        <% if (err && err.stack) { %>
+          <details class="mt-3">
+            <summary class="text-secondary">Stack trace (expand to view)</summary>
+            <pre class="small"><%= err.stack %></pre>
+          </details>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>

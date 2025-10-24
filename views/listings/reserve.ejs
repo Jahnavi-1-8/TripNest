@@ -1,0 +1,247 @@
+<% layout('layouts/bolierplate') %>
+
+<style>
+  .reserve-container { max-width: 1100px; margin: 2.5rem auto; }
+  .card-summary { background: #fff; border-radius: 8px; padding: 1rem; }
+  .divider { height: 1px; background: #e9ecef; margin: .75rem 0; }
+  .small-muted { font-size: .9rem; color: #6c757d; }
+  .total-amount { font-size: 1.25rem; font-weight: 700; }
+  .form-section { background: #fff; padding: 1rem; border-radius: 8px; }
+</style>
+
+<div class="container reserve-container">
+  <div class="row g-4">
+    <!-- Left: Payment & guest details -->
+    <div class="col-12 col-md-7">
+      <div class="form-section">
+        <h3 class="mb-3">Complete your reservation</h3>
+
+        <p class="small-muted">You're booking <strong><%= listing.title %></strong></p>
+
+        <form id="payment-form" action="/listings/<%= listing._id %>/reserve" method="POST">
+          <input type="hidden" name="checkIn" value="<%= typeof checkIn !== 'undefined' ? checkIn : '' %>">
+          <input type="hidden" name="checkOut" value="<%= typeof checkOut !== 'undefined' ? checkOut : '' %>">
+          <input type="hidden" name="guests" value="<%= typeof guests !== 'undefined' ? guests : 1 %>">
+
+          <!-- Contact details -->
+          <div class="mb-3">
+            <label class="form-label">Full name</label>
+            <input name="payer[name]" type="text" class="form-control" placeholder="Guest full name" required value="<%= currentUser?.username || '' %>">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input name="payer[email]" type="email" class="form-control" placeholder="you@example.com" required value="<%= currentUser?.email || '' %>">
+          </div>
+
+          <!-- Payment fields (card) -->
+          <h5 class="mt-4">Payment</h5>
+          <p class="small-muted">We securely process payments. This page is a template — integrate a payment gateway (Stripe/PayPal) on the server for production.</p>
+
+          <div class="mb-3">
+            <label class="form-label">Name on card</label>
+            <input name="card[name]" type="text" class="form-control" placeholder="Name on card" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Card number</label>
+            <input name="card[number]" type="text" inputmode="numeric" autocomplete="cc-number" maxlength="19" class="form-control" placeholder="4242 4242 4242 4242" required>
+          </div>
+
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="form-label">Expiry</label>
+              <input name="card[exp]" type="text" maxlength="7" placeholder="MM / YYYY" class="form-control" required>
+            </div>
+            <div class="col-6">
+              <label class="form-label">CVC</label>
+              <input name="card[cvc]" type="text" inputmode="numeric" maxlength="4" class="form-control" placeholder="CVC" required>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Billing address</label>
+            <input name="billing[address]" type="text" class="form-control" placeholder="Street address" required>
+          </div>
+
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <input name="billing[city]" type="text" class="form-control" placeholder="City" required>
+            </div>
+            <div class="col-6">
+              <input name="billing[country]" type="text" class="form-control" placeholder="Country" required>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Promo code (optional)</label>
+            <div class="input-group">
+              <input name="promo" type="text" class="form-control" placeholder="PROMO2025">
+              <button id="applyPromo" type="button" class="btn btn-outline-secondary">Apply</button>
+            </div>
+            <div id="promoMessage" class="form-text"></div>
+          </div>
+
+          <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" value="1" id="saveCard" name="saveCard">
+            <label class="form-check-label" for="saveCard">Save this card for future bookings</label>
+          </div>
+
+          <div class="mb-3">
+            <button id="confirmPaymentBtn" type="submit" class="btn btn-danger w-100">Confirm and pay</button>
+          </div>
+
+          <p class="small-muted">By confirming you agree to the host's House Rules and our Terms of Service.</p>
+        </form>
+      </div>
+    </div>
+
+    <!-- Right: Booking summary -->
+    <div class="col-12 col-md-5">
+      <div class="card-summary shadow-sm">
+        <h5>Booking summary</h5>
+        <p class="small-muted">Review before confirming</p>
+
+        <div class="divider"></div>
+
+        <div class="d-flex justify-content-between">
+          <div>
+            <div class="small-muted">Dates</div>
+            <div><strong id="datesText"><%= typeof checkIn !== 'undefined' ? checkIn : '—' %> — <%= typeof checkOut !== 'undefined' ? checkOut : '—' %></strong></div>
+          </div>
+          <div class="text-end small-muted">
+            <div id="nightsText">&nbsp;</div>
+            <div id="guestsText">Guests: <%= typeof guests !== 'undefined' ? guests : 1 %></div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="d-flex justify-content-between">
+          <div class="small-muted">Price per night</div>
+          <div>₹ <span id="pricePerNight"><%= listing.price %></span></div>
+        </div>
+
+        <div class="d-flex justify-content-between mt-2">
+          <div class="small-muted">Subtotal</div>
+          <div>₹ <span id="subtotal">0</span></div>
+        </div>
+
+        <div class="d-flex justify-content-between mt-2">
+          <div class="small-muted">Cleaning fee</div>
+          <div>₹ <span id="cleaningFee">0</span></div>
+        </div>
+
+        <div class="d-flex justify-content-between mt-2">
+          <div class="small-muted">Service fee</div>
+          <div>₹ <span id="serviceFee">0</span></div>
+        </div>
+
+        <div class="d-flex justify-content-between mt-2">
+          <div class="small-muted">Taxes</div>
+          <div>₹ <span id="taxes">0</span></div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="d-flex justify-content-between align-items-center">
+          <div class="small-muted">Total</div>
+          <div class="total-amount">₹ <span id="totalAmount">0</span></div>
+        </div>
+
+        <div class="divider"></div>
+
+        <p class="small-muted mb-1">You'll be charged after the host accepts the booking (or immediately if instant-booking is enabled).</p>
+
+        <button class="btn btn-outline-secondary w-100 mt-2" id="editDatesBtn">Edit dates</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- server-provided values exposed via a hidden element to avoid embedding EJS tags inside inline JS -->
+<div id="reserveData" style="display:none"
+     data-price="<%= listing.price || 0 %>"
+     data-checkin="<%= typeof checkIn !== 'undefined' ? checkIn : '' %>"
+     data-checkout="<%= typeof checkOut !== 'undefined' ? checkOut : '' %>"
+     data-guests="<%= typeof guests !== 'undefined' ? guests : 1 %>"></div>
+
+<script>
+  (function(){
+  // Retrieve server-provided values from data attributes (no raw EJS in JS)
+  const dataEl = document.getElementById('reserveData');
+  const pricePerNight = Number(dataEl?.dataset?.price) || 0;
+  const checkIn = dataEl?.dataset?.checkin || '';
+  const checkOut = dataEl?.dataset?.checkout || '';
+  const guests = Number(dataEl?.dataset?.guests) || 1;
+
+    function parseDate(d){ if(!d) return null; const p = d.split('-'); return new Date(p[0], p[1]-1, p[2]); }
+
+    function nightsBetween(a,b){ if(!a||!b) return 0; const diff = (b - a) / (1000*60*60*24); return Math.max(0, Math.round(diff)); }
+
+    const inDate = parseDate(checkIn);
+    const outDate = parseDate(checkOut);
+    const nights = nightsBetween(inDate, outDate) || 1;
+
+    // Fees policy (adjustable)
+    const cleaningRate = 0.1; // 10% of subtotal
+    const serviceRate = 0.12; // 12% service fee
+    const taxRate = 0.05; // 5% taxes
+
+    function compute(){
+      const subtotal = nights * pricePerNight;
+      const cleaningFee = Math.round(subtotal * cleaningRate);
+      const serviceFee = Math.round(subtotal * serviceRate);
+      const taxes = Math.round(subtotal * taxRate);
+      const total = subtotal + cleaningFee + serviceFee + taxes;
+
+      document.getElementById('nightsText').innerText = nights + ' night' + (nights>1?'s':'');
+      document.getElementById('pricePerNight').innerText = pricePerNight;
+      document.getElementById('subtotal').innerText = subtotal;
+      document.getElementById('cleaningFee').innerText = cleaningFee;
+      document.getElementById('serviceFee').innerText = serviceFee;
+      document.getElementById('taxes').innerText = taxes;
+      document.getElementById('totalAmount').innerText = total;
+
+      // dates text
+      document.getElementById('datesText').innerText = (checkIn || '—') + ' — ' + (checkOut || '—');
+      document.getElementById('guestsText').innerText = 'Guests: ' + (guests || 1);
+    }
+
+    compute();
+
+    // Edit dates helper: go back to show page where date picker is (assumes referrer or listing page)
+    document.getElementById('editDatesBtn').addEventListener('click', function(){
+      window.location.href = '/listings/<%= listing._id %>';
+    });
+
+    // Promo button sample behavior (client-side only)
+    document.getElementById('applyPromo').addEventListener('click', function(){
+      const code = document.querySelector('input[name=\'promo\']').value.trim();
+      const msg = document.getElementById('promoMessage');
+      if(!code){ msg.innerText = 'Enter a promo code'; msg.style.color = '#d63384'; return; }
+      // Example: simple code
+      if(code.toUpperCase() === 'SAVE10'){
+        msg.innerText = 'Promo applied: 10% off subtotal'; msg.style.color = '#198754';
+        // adjust display (not wired to server) — for demo only
+        // In production, validate promo server-side and recalc totals before charging.
+      } else {
+        msg.innerText = 'Invalid promo'; msg.style.color = '#d63384';
+      }
+    });
+
+    // Simple client-side card input formatting (very basic)
+    const cardInput = document.querySelector('input[name="card[number]"]');
+    if(cardInput){
+      cardInput.addEventListener('input', function(e){
+        let v = e.target.value.replace(/\D/g,'');
+        v = v.match(/.{1,4}/g)?.join(' ') || v;
+        e.target.value = v;
+      });
+    }
+
+    // NOTE: This template collects raw card data in the form. For production, DO NOT post raw card data to your server.
+    // Integrate Stripe Elements or a PCI-compliant provider so the card data is tokenized in the browser and the token sent to your server.
+
+  })();
+</script>

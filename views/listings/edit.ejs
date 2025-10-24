@@ -1,0 +1,152 @@
+<% layout('/layouts/bolierplate') %>
+
+<div class="row">
+  <div class="col-8 offset-2">
+    <h2 class="mb-4">Edit Listing</h2>
+
+    <form method="POST" action="/listings/<%= listing._id %>?_method=PUT" novalidate class="needs-validation" enctype="multipart/form-data">
+
+      <!-- Title -->
+      <div class="mb-2">
+        <label for="title" class="form-label">Title:</label>
+        <input
+          type="text"
+          id="title"
+          name="title"
+          class="form-control"
+          value="<%= listing.title %>"
+          required
+        >
+        <div class="invalid-feedback">Please provide a title.</div>
+      </div>
+
+      <!-- Description -->
+      <div class="mb-3">
+        <label for="description" class="form-label">Description:</label>
+        <textarea id="description" name="description" class="form-control" required><%= listing.description %></textarea>
+        <div class="invalid-feedback">Please provide a description.</div>
+      </div>
+
+      <!-- Image upload + preview -->
+      <div class="mb-3 mt-3">
+        <label for="image" class="form-label">Upload image (optional):</label>
+        <input class="form-control" type="file" id="image" name="image" accept="image/*">
+        <img id="image-preview" src="<%= listing.image && listing.image.url ? listing.image.url : '/images/default.jpg' %>" alt="Image preview" style="max-width:100%; height:220px; object-fit:cover; margin-top:0.5rem; border-radius:6px;" />
+      </div>
+
+      <!-- Map picker (edit) -->
+      <div class="mb-3">
+        <label class="form-label">Pick location on map (optional):</label>
+        <div id="form-map" data-lat="<%= (listing.geometry && listing.geometry.coordinates && listing.geometry.coordinates.length === 2) ? listing.geometry.coordinates[1] : '' %>" data-lon="<%= (listing.geometry && listing.geometry.coordinates && listing.geometry.coordinates.length === 2) ? listing.geometry.coordinates[0] : '' %>" style="width:100%; height:300px; border-radius:8px; overflow:hidden; border:1px solid #ddd;"></div>
+        <input type="hidden" name="latitude" id="latitude" value="<%= (listing.geometry && listing.geometry.coordinates && listing.geometry.coordinates.length === 2) ? listing.geometry.coordinates[1] : '' %>" />
+        <input type="hidden" name="longitude" id="longitude" value="<%= (listing.geometry && listing.geometry.coordinates && listing.geometry.coordinates.length === 2) ? listing.geometry.coordinates[0] : '' %>" />
+        <div class="form-text">Click on the map to set the exact location. Leave blank to keep current coordinates.</div>
+      </div>
+
+      <!-- Price -->
+      <div class="mb-2">
+        <label for="price" class="form-label">Price per night (&#8377;):</label>
+        <input
+          type="number"
+          id="price"
+          name="price"
+          class="form-control"
+          value="<%= listing.price %>"
+          required
+          min="0"
+        >
+        <div class="invalid-feedback">Please provide a valid price (0 or more).</div>
+      </div>
+
+      <!-- Location and Country -->
+      <div class="row">
+        <div class="mb-2 col-md-4">
+          <label for="location" class="form-label">Location:</label>
+          <input
+            type="text"
+            id="location"
+            name="location"
+            class="form-control"
+            value="<%= listing.location %>"
+            required
+          >
+          <div class="invalid-feedback">Please provide a location.</div>
+        </div>
+
+        <div class="mb-2 col-md-8">
+          <label for="country" class="form-label">Country:</label>
+          <input
+            type="text"
+            id="country"
+            name="country"
+            class="form-control"
+            value="<%= listing.country %>"
+            required
+          >
+          <div class="invalid-feedback">Please provide a country.</div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-dark mt-3">Update Listing</button>
+    </form>
+  </div>
+</div>
+
+<script>
+  (function () {
+    // Image preview
+    function initImagePreview() {
+      const input = document.getElementById('image');
+      const preview = document.getElementById('image-preview');
+      if (!input || !preview) return;
+      input.addEventListener('change', function (e) {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function (ev) { preview.src = ev.target.result; };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // Map picker init with retry for Leaflet
+    function initMapPicker() {
+      const mapEl = document.getElementById('form-map');
+      if (!mapEl) return;
+      let attempts = 0, maxAttempts = 30;
+      (function tryInit() {
+        attempts++;
+        if (typeof L === 'undefined') {
+          if (attempts <= maxAttempts) return setTimeout(tryInit, 150);
+          mapEl.innerHTML = '<div style="padding:1rem;color:#6c757d">Map failed to load. Check browser console for errors.</div>';
+          return;
+        }
+        const latAttr = mapEl.dataset.lat, lonAttr = mapEl.dataset.lon;
+        const hasCoords = latAttr && lonAttr;
+        const lat = hasCoords ? parseFloat(latAttr) : 20.5937;
+        const lon = hasCoords ? parseFloat(lonAttr) : 78.9629;
+        const zoom = hasCoords ? 13 : 5;
+        const map = L.map('form-map').setView([lat, lon], zoom);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '\u00a9 OpenStreetMap contributors' }).addTo(map);
+        setTimeout(() => { try { map.invalidateSize(); } catch (e) {} }, 200);
+        let marker = null;
+        function setMarker(lat, lon) {
+          if (marker) marker.setLatLng([lat, lon]); else marker = L.marker([lat, lon]).addTo(map);
+          const latEl = document.getElementById('latitude');
+          const lonEl = document.getElementById('longitude');
+          if (latEl) latEl.value = lat; if (lonEl) lonEl.value = lon;
+          setTimeout(() => { try { map.invalidateSize(); map.setView([lat, lon], Math.max(map.getZoom(), 8)); } catch (e) {} }, 120);
+        }
+        if (hasCoords) setMarker(lat, lon);
+        map.on('click', function (e) { setMarker(e.latlng.lat, e.latlng.lng); });
+        window.addEventListener('resize', () => { try { map.invalidateSize(); } catch (e) {} });
+      })();
+    }
+
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+      initImagePreview(); initMapPicker();
+    } else {
+      window.addEventListener('DOMContentLoaded', function () { initImagePreview(); initMapPicker(); });
+    }
+  })();
+</script>
+

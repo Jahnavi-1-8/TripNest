@@ -1,0 +1,178 @@
+<% layout('layouts/bolierplate') %>
+
+<style>
+.star {
+  font-size: 1.2rem;
+  color: #ddd;
+}
+.star.filled {
+  color: #ffc107; /* Gold color for filled stars */
+}
+.img{
+    object-fit: cover;
+    height: 400px;
+    width: 100%;
+}
+.reserve-btn{
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+</style>
+
+<div class="container my-5">
+  <div class="show-main mx-auto">
+    <div class="row">
+    
+    <!-- Left side: Images + Listing Details -->
+    <div class="col-12 col-md-8 mx-auto">
+      <img 
+        src="<%= listing.image && listing.image.url ? listing.image.url : '/images/default.jpg' %>" 
+        class="img-fluid rounded mb-3 img"
+        alt="<%= listing.title %>"
+      >
+
+      <h2 class="fw-bold"><%= listing.title %></h2>
+      <p><%= listing.description %></p>
+      <p class="text-muted">
+        Hosted by <strong><%= listing.owner?.username || 'Unknown Host' %></strong>
+      </p>
+
+      <div class="mt-2">
+        <p><strong>Price:</strong> ₹<%= listing.price %> / night</p>
+        <p><strong>Location:</strong> <%= listing.location %>, <%= listing.country %></p>
+      </div>
+        <!-- Reserve Box (Horizontal) -->
+         <form action="/listings/<%= listing._id %>/reserve" method="GET">
+<div class="booking-card p-4 shadow rounded mb-4" style="background:#fff;">
+  <div class="d-flex flex-wrap align-items-end gap-2">
+    
+    <!-- Price -->
+    <div class="me-3 d-flex align-items-center">
+      <h5 class="mb-0 me-1"><strong>₹ <%= listing.price %></strong></h5>
+      <span class="text-muted">/ night</span>
+    </div>
+
+    <% if (currentUser) { %>
+    <!-- Check-in -->
+    <div>
+      <label class="form-label small mb-1"><b>Check-in</b></label>
+      <input type="date" name="checkIn" class="form-control form-control-sm" required>
+    </div>
+
+    <!-- Check-out -->
+    <div>
+      <label class="form-label small mb-1"><b>Check-out</b></label>
+      <input type="date" name="checkOut" class="form-control form-control-sm" required>
+    </div>
+
+    <!-- Guests -->
+    <div>
+      <label class="form-label small mb-1"><b>Guests</b></label>
+      <input type="number" min="1" name="guests" class="form-control form-control-sm" required>
+    </div>
+
+    <!-- Reserve Button -->
+    <div class="align-self-end">
+      <button class="btn btn-success rounded-pill reserve-btn">Reserve</button>
+    </div>
+
+    <% } else { %>
+    <a href="/login" class="btn btn-primary rounded-pill">Login to Reserve</a>
+    <% } %>
+    
+  </div>
+</div>
+</form>
+
+
+ <hr/>
+      <!-- Map -->
+      <div class="mt-4">
+        <div id="listing-map"
+          data-address="<%= listing.location + ', ' + listing.country %>"
+          <% if (listing.geometry?.coordinates?.length === 2) { %>
+          data-lat="<%= listing.geometry.coordinates[1] %>"
+          data-lon="<%= listing.geometry.coordinates[0] %>"
+          <% } %>
+          style="width:100%; height:300px; border-radius:8px;">
+        </div>
+      </div>
+    
+    
+      <!-- Action Buttons -->
+      <div class="mt-4 d-flex gap-2">
+        <a href="/listings" class="btn btn-outline-dark w-100">Back</a>
+
+        <% if (currentUser) { %>
+        <a href="/listings/<%= listing._id %>/edit" class="btn btn-dark w-100">Edit</a>
+        <form action="/listings/<%= listing._id %>?_method=DELETE" method="POST" class="w-100">
+          <button class="btn btn-danger w-100">Delete</button>
+        </form>
+        <% } %>
+      </div>
+   
+      <!-- Reviews Section -->
+      <h4 class="mt-5">All Reviews</h4>
+      <div class="list-group">
+
+        <% if (!listing.reviews.length) { %>
+          <p class="text-muted">No reviews yet.</p>
+        <% } else { %>
+          <% listing.reviews.forEach(review => { %>
+            <div class="list-group-item my-3 shadow-sm rounded border-0">
+              <h5><%= review.author?.username || 'Anonymous' %></h5>
+
+              <div class="d-flex justify-content-between">
+                <div>
+                  <% for (let i = 1; i <= 5; i++) { %>
+                    <span class="star <%= i <= review.rating ? 'filled' : '' %>">&#9733;</span>
+                  <% } %>
+                </div>
+                <small class="text-muted">
+                  <%= new Date(review.createdAt).toLocaleDateString("en-IN") %>
+                </small>
+              </div>
+
+              <p class="mb-1"><%= review.comment %></p>
+
+              <% if (currentUser && currentUser._id == review.author?._id) { %>
+              <form method="POST"
+                action="/listings/<%= listing._id %>/reviews/<%= review._id %>?_method=DELETE">
+                <button class="btn btn-sm btn-danger">Delete</button>
+              </form>
+              <% } %>
+            </div>
+          <% }) %>
+        <% } %>
+
+      </div>
+
+      <!-- Add Review Form -->
+      <% if (currentUser) { %>
+      <h4 class="mt-4">Leave a Review</h4>
+      <form method="POST" action="/listings/<%= listing._id %>/reviews">
+        <div class="mb-2">
+          <label class="form-label">Rating</label>
+          <select name="review[rating]" class="form-select" required>
+            <option disabled selected>Select rating</option>
+            <option>1</option><option>2</option>
+            <option>3</option><option>4</option><option>5</option>
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Comment</label>
+          <textarea name="review[comment]" class="form-control" rows="3" required></textarea>
+        </div>
+
+        <button class="btn btn-outline-dark">Submit</button>
+      </form>
+      <% } %>
+
+      </div>
+
+      
+
+      </div> 
+    </div> 
+  </div>

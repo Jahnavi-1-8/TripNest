@@ -1,0 +1,38 @@
+<% layout('layouts/bolierplate') %>
+
+<div class="container my-5">
+  <h2 class="mb-3">Search Results</h2>
+
+  <% if (typeof query !== 'undefined') { %>
+    <p class="text-muted">Showing results for
+      <% if (query.location) { %>
+        <strong><%= query.location %></strong>
+      <% } %>
+      <% if (query.checkin) { %> · Check-in: <%= query.checkin %> <% } %>
+      <% if (query.checkout) { %> · Check-out: <%= query.checkout %> <% } %>
+      <% if (query.guests) { %> · Guests: <%= query.guests %> <% } %>
+    </p>
+  <% } %>
+
+  <% if (!listings || listings.length === 0) { %>
+    <div class="alert alert-warning">No listings found matching your criteria.</div>
+  <% } else { %>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+      <% listings.forEach(listing => { %>
+        <div class="col">
+          <div class="card listing-card h-100 shadow-sm">
+            <a href="/listings/<%= listing._id %>" class="text-decoration-none text-dark">
+              <img src="<%= listing.image && listing.image.url ? listing.image.url : '/images/default.jpg' %>" class="card-img-top" alt="<%= listing.title %>">
+            </a>
+            <div class="card-body d-flex flex-column">
+              <h5 class="card-title mb-2"><a href="/listings/<%= listing._id %>" class="text-decoration-none text-dark"><%= listing.title %></a></h5>
+              <p class="card-text flex-grow-1 text-muted"><%= listing.description?.slice(0,140) %>...</p>
+              <p class="card-text mt-auto"><strong>&#8377;<%= listing.price ? listing.price.toLocaleString('en-IN') : 'N/A' %>/night</strong> · <%= listing.location %></p>
+              <a href="/listings/<%= listing._id %>" class="btn btn-primary mt-2 w-100">View Details</a>
+            </div>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  <% } %>
+</div>
