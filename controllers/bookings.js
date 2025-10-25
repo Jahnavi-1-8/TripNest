@@ -35,6 +35,7 @@ module.exports.createBooking=async (req, res) => {
       throw new Error('STRIPE_SECRET_KEY is not set in environment');
     }
 
+    // Add metadata so webhook can create the Booking record after successful payment
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
@@ -53,6 +54,13 @@ module.exports.createBooking=async (req, res) => {
       ],
       success_url: `${BASE_URL}/bookings/success`,
       cancel_url: `${BASE_URL}/bookings/cancel`,
+      metadata: {
+        listingId: String(listing._id),
+        userId: req.user ? String(req.user._id) : '',
+        checkIn: checkIn || '',
+        checkOut: checkOut || '',
+        guests: guests || '1'
+      }
     });
 
     res.redirect(session.url);

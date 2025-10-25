@@ -16,6 +16,7 @@ const reviewsRoutes= require("./routes/reviews.js");
 const userRoutes = require("./routes/user.js");
 const bookingRoutes = require("./routes/bookings");
 const adminRoutes = require("./routes/admin.js");
+const stripeRoutes = require("./routes/stripe.js");
 const methodOverride = require("method-override");
 const ejsMate = require("ejs-mate");
 const ExpressError = require("./utils/ExpressError.js");
@@ -24,8 +25,9 @@ const Listing = require("./models/listings.js");
 const { isAdmin } = require("./middleware.js");
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
-app.use(express.urlencoded({ extended: true }));
-app.use(methodOverride("_method"));
+// NOTE: we intentionally register body-parsing middleware after the Stripe webhook
+// route so Stripe can deliver the raw request body required for signature
+// verification. The Stripe route applies its own `express.raw()` parser.
 app.engine("ejs", ejsMate);
 app.use(express.static(path.join(__dirname, "public")));
 // Serve uploaded files (multer dest: uploads/)
@@ -120,6 +122,13 @@ app.use("/listings", listingsRoutes);
 app.use('/', userRoutes);
 app.use('/bookings', bookingRoutes);
 app.use('/admin', adminRoutes);
+// Mount Stripe webhook route at /stripe
+// Note: the webhook route expects raw request body for signature verification
+app.use('/stripe', stripeRoutes);
+
+// Now register body parsing and method-override for the rest of the app
+app.use(express.urlencoded({ extended: true }));
+app.use(methodOverride("_method"));
 
 // Redirect root URL to /listings so the site landing page shows listings
 app.get('/', (req, res) => {
