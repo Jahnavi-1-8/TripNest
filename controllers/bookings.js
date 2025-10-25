@@ -3,7 +3,7 @@ const booking=require('../models/booking.js');
 const Listing = require('../models/listings');
 const Stripe = require('stripe');
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY || '');
-const BASE_URL = process.env.BASE_URL ;
+const BASE_URL = process.env.BASE_URL || 'http://localhost:8080';
 module.exports.createBooking=async (req, res) => {
   try {
     const listing = await Listing.findById(req.params.id);
@@ -63,10 +63,15 @@ module.exports.createBooking=async (req, res) => {
       }
     });
 
+    if (!session || !session.url) {
+      throw new Error('Failed to create Stripe checkout session');
+    }
     res.redirect(session.url);
   } catch (err) {
-    console.error(err);
-    res.redirect("/error");
+    console.error(err && err.stack ? err.stack : err);
+    // provide a friendly message and send user back to the pay page
+    if (req && req.flash) req.flash('error', `Payment initialization failed: ${err.message}`);
+    return res.redirect(`/bookings/${req.params.id}/pay`);
   }
 };
 module.exports.renderPaymentPage=async (req, res) => {

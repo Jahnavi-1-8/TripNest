@@ -116,19 +116,22 @@ mongoose.connection.on('disconnected', () => {
   console.warn('⚠️ Mongoose disconnected');
 });
 
+// Mount Stripe webhook route at /stripe **first** so the webhook receives the raw body
+// (the route itself applies express.raw). Other routes that need parsed bodies
+// are mounted after the urlencoded parser below.
+app.use('/stripe', stripeRoutes);
+
+// Now register body parsing and method-override for the rest of the app
+app.use(express.urlencoded({ extended: true }));
+app.use(methodOverride("_method"));
+
+// Mount application routes (after body parsing middleware)
 // Mount reviews first so nested routes are matched correctly and use :id to match controller expectations
 app.use("/listings/:id/reviews", reviewsRoutes);
 app.use("/listings", listingsRoutes);
 app.use('/', userRoutes);
 app.use('/bookings', bookingRoutes);
 app.use('/admin', adminRoutes);
-// Mount Stripe webhook route at /stripe
-// Note: the webhook route expects raw request body for signature verification
-app.use('/stripe', stripeRoutes);
-
-// Now register body parsing and method-override for the rest of the app
-app.use(express.urlencoded({ extended: true }));
-app.use(methodOverride("_method"));
 
 // Redirect root URL to /listings so the site landing page shows listings
 app.get('/', (req, res) => {
