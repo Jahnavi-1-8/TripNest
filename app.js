@@ -120,6 +120,11 @@ app.use("/listings/:id/reviews", reviewsRoutes);
 app.use("/listings", listingsRoutes);
 app.use('/', userRoutes);
 
+// Redirect root URL to /listings so the site landing page shows listings
+app.get('/', (req, res) => {
+  return res.redirect('/listings');
+});
+
 // Catch-all for unmatched routes — use app.use to avoid path-to-regexp parsing issues
 app.use((req, res, next) => {
   next(new ExpressError(`Page Not Found: ${req.originalUrl}`, 404));
