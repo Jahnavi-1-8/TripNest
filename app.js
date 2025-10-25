@@ -14,11 +14,13 @@ const User = require("./models/user.js");
 const listingsRoutes= require("./routes/listings.js");
 const reviewsRoutes= require("./routes/reviews.js");
 const userRoutes = require("./routes/user.js");
+const bookingRoutes = require("./routes/bookings");
 const methodOverride = require("method-override");
 const ejsMate = require("ejs-mate");
 const ExpressError = require("./utils/ExpressError.js");
 const MongoStore = require('connect-mongo');
 const Listing = require("./models/listings.js");
+const { isAdmin } = require("./middleware.js");
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 app.use(express.urlencoded({ extended: true }));
@@ -77,10 +79,6 @@ const connectOpts = {
 };
 
 
-// app.get("/", (req, res) => {
-//   res.send("Hello World");
-// });
-
 // Database URL (allow fallback to local MongoDB for development)
 const DB_URL = process.env.ATLASDB_URL || process.env.DB_URL || 'mongodb://127.0.0.1:27017/tripnest';
 
@@ -119,6 +117,7 @@ mongoose.connection.on('disconnected', () => {
 app.use("/listings/:id/reviews", reviewsRoutes);
 app.use("/listings", listingsRoutes);
 app.use('/', userRoutes);
+app.use('/bookings', bookingRoutes);
 
 // Redirect root URL to /listings so the site landing page shows listings
 app.get('/', (req, res) => {
@@ -145,7 +144,7 @@ app.use((err, req, res, next) => {
   const exposeError = (process.env.NODE_ENV !== 'production') && statusCode >= 500;
   res.status(statusCode).render('error', { statusCode, message, err: exposeError ? err : null });
 });
-const { isAdmin } = require("./middleware.js");
+
 
 // View all listings as Admin
 app.get("/admin/listings", isAdmin, async (req, res) => {
@@ -166,6 +165,7 @@ app.get("/admin/becomehost/:listingId", isAdmin, async (req, res) => {
     res.status(500).send(err);
   }
 });
+// bookingRoutes mounted earlier with other route modules
 
 app.listen(8080, () => {
   console.log("Server started on port 8080");

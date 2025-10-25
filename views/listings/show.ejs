@@ -41,48 +41,32 @@
         <p><strong>Price:</strong> ₹<%= listing.price %> / night</p>
         <p><strong>Location:</strong> <%= listing.location %>, <%= listing.country %></p>
       </div>
-        <!-- Reserve Box (Horizontal) -->
-         <form action="/listings/<%= listing._id %>/reserve" method="GET">
-<div class="booking-card p-4 shadow rounded mb-4" style="background:#fff;">
-  <div class="d-flex flex-wrap align-items-end gap-2">
-    
-    <!-- Price -->
-    <div class="me-3 d-flex align-items-center">
-      <h5 class="mb-0 me-1"><strong>₹ <%= listing.price %></strong></h5>
-      <span class="text-muted">/ night</span>
-    </div>
+      <div class="booking-card p-4 shadow rounded mb-4" style="background:#fff;">
 
-    <% if (currentUser) { %>
-    <!-- Check-in -->
-    <div>
-      <label class="form-label small mb-1"><b>Check-in</b></label>
-      <input type="date" name="checkIn" class="form-control form-control-sm" required>
-    </div>
+        <div class="d-flex flex-wrap align-items-end gap-2">
 
-    <!-- Check-out -->
-    <div>
-      <label class="form-label small mb-1"><b>Check-out</b></label>
-      <input type="date" name="checkOut" class="form-control form-control-sm" required>
-    </div>
+          <!-- Price -->
+          <div class="me-3 d-flex align-items-center">
+            <h5 class="mb-0 me-1 fw-bold">₹ <%= listing.price %></h5>
+            <span class="text-muted">/ night</span>
+          </div>
 
-    <!-- Guests -->
-    <div>
-      <label class="form-label small mb-1"><b>Guests</b></label>
-      <input type="number" min="1" name="guests" class="form-control form-control-sm" required>
-    </div>
+          <% if (currentUser) { %>
 
-    <!-- Reserve Button -->
-    <div class="align-self-end">
-      <button class="btn btn-success rounded-pill reserve-btn">Reserve</button>
-    </div>
+          <!-- Redirect to dedicated pay page so user can select dates and see breakdown -->
+          <div class="mt-2 mt-md-0">
+            <a href="/bookings/<%= listing._id %>/pay" class="btn btn-success rounded-pill reserve-btn px-4">Reserve</a>
+          </div>
 
-    <% } else { %>
-    <a href="/login" class="btn btn-primary rounded-pill">Login to Reserve</a>
-    <% } %>
-    
-  </div>
-</div>
-</form>
+          <% } else { %>
+
+          <a href="/login" class="btn btn-primary rounded-pill ms-3">Login to Reserve</a>
+
+          <% } %>
+
+        </div>
+
+      </div>
 
 
      <hr/>
@@ -146,6 +130,38 @@
         <% } %>
 
       </div>
+      <!-- ✅ Amenities Section -->
+<div class="mt-5">
+  <h4 class="fw-bold mb-3">What this place offers</h4>
+
+  <div class="row g-3 amenities-grid">
+
+    <% const amenities = [
+      { icon: "fas fa-city", label: "City skyline view" },
+      { icon: "fas fa-tree", label: "Garden view" },
+      { icon: "fas fa-water", label: "Lake access" },
+      { icon: "fas fa-utensils", label: "Kitchen" },
+      { icon: "fas fa-wifi", label: "Wifi" },
+      { icon: "fas fa-laptop-house", label: "Dedicated workspace" },
+      { icon: "fas fa-parking", label: "Free parking on premises" },
+      { icon: "fas fa-swimming-pool", label: "Pool" },
+      { icon: "fas fa-tv", label: "TV" },
+      { icon: "fas fa-elevator", label: "Lift" }
+    ]; %>
+
+    <% amenities.forEach((a, index) => { %>
+      <div class="col-6 col-md-4 amenity-item <%= index >= 6 ? 'hide-mobile' : '' %>">
+        <i class="<%= a.icon %> fs-5"></i>
+        <span><%= a.label %></span>
+      </div>
+    <% }) %>
+
+  </div>
+
+  <button id="toggleAmenities" class="btn btn-outline-dark w-100 mt-3">
+    Show all amenities
+  </button>
+</div>
 
       <!-- Add Review Form -->
       <% if (currentUser) { %>

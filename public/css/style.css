@@ -270,3 +270,18 @@ h1{
     font-size: 22px;
     cursor: pointer;
 }
+/* Initially hide extra items only on small screens */
+.hide-mobile {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .hide-mobile {
+    display: flex !important; /* Show on tablets/larger */
+  }
+}
+@media (max-width: 767px) {
+  .hide-mobile {
+    display: none !important; /* Hide on mobile */
+  }
+}
