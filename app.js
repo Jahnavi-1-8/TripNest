@@ -15,6 +15,7 @@ const listingsRoutes= require("./routes/listings.js");
 const reviewsRoutes= require("./routes/reviews.js");
 const userRoutes = require("./routes/user.js");
 const bookingRoutes = require("./routes/bookings");
+const adminRoutes = require("./routes/admin.js");
 const methodOverride = require("method-override");
 const ejsMate = require("ejs-mate");
 const ExpressError = require("./utils/ExpressError.js");
@@ -118,6 +119,7 @@ app.use("/listings/:id/reviews", reviewsRoutes);
 app.use("/listings", listingsRoutes);
 app.use('/', userRoutes);
 app.use('/bookings', bookingRoutes);
+app.use('/admin', adminRoutes);
 
 // Redirect root URL to /listings so the site landing page shows listings
 app.get('/', (req, res) => {
@@ -146,25 +148,7 @@ app.use((err, req, res, next) => {
 });
 
 
-// View all listings as Admin
-app.get("/admin/listings", isAdmin, async (req, res) => {
-  const listings = await Listing.find().populate("owner");
-  res.render("admin/listings", { listings });
-});
 
-// Become host of a listing (Admin only)
-app.get("/admin/becomehost/:listingId", isAdmin, async (req, res) => {
-  try {
-    const listing = await Listing.findById(req.params.listingId);
-    if (!listing) return res.status(404).send("Listing not found");
-
-    listing.owner = req.user._id; // make yourself host
-    await listing.save();
-    res.send({ message: "You are now host of this listing", listing });
-  } catch (err) {
-    res.status(500).send(err);
-  }
-});
 // bookingRoutes mounted earlier with other route modules
 
 app.listen(8080, () => {
