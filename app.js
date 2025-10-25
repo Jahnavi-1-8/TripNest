@@ -18,6 +18,7 @@ const methodOverride = require("method-override");
 const ejsMate = require("ejs-mate");
 const ExpressError = require("./utils/ExpressError.js");
 const MongoStore = require('connect-mongo');
+const Listing = require("./models/listings.js");
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 app.use(express.urlencoded({ extended: true }));
@@ -60,6 +61,8 @@ app.use((req, res, next) => {
   res.locals.success = req.flash('success');
   res.locals.error = req.flash('error');
   res.locals.currentUser = req.user;
+  // some templates expect `user` variable; provide an alias for compatibility
+  res.locals.user = req.user;
   next();
 });
 const connectOpts = {
@@ -74,27 +77,6 @@ const connectOpts = {
 };
 
 
-app.get("/demouser", async (req, res, next) => {
-  try {
-    const username = 'demouser';
-    // Check if demo user already exists
-    let existing = await User.findOne({ username });
-    if (existing) {
-      return res.send({ message: 'Demo user already exists', user: existing });
-    }
-    const newUser = new User({ username, email: 'demo@gmail.com' });
-    const registeredUser = await User.register(newUser, 'password');
-    res.send(registeredUser);
-  } catch (err) {
-    // If another process created the user between findOne and register,
-    // passport-local-mongoose throws a UserExistsError — handle gracefully.
-    if (err && err.name === 'UserExistsError') {
-      const existing = await User.findOne({ username: 'demouser' });
-      return res.send({ message: 'Demo user already exists', user: existing });
-    }
-    next(err);
-  }
-});
 // app.get("/", (req, res) => {
 //   res.send("Hello World");
 // });
@@ -157,6 +139,27 @@ app.use((err, req, res, next) => {
   // Only expose stack traces in non-production environments for server errors
   const exposeError = (process.env.NODE_ENV !== 'production') && statusCode >= 500;
   res.status(statusCode).render('error', { statusCode, message, err: exposeError ? err : null });
+});
+const { isAdmin } = require("./middleware.js");
+
+// View all listings as Admin
+app.get("/admin/listings", isAdmin, async (req, res) => {
+  const listings = await Listing.find().populate("owner");
+  res.render("admin/listings", { listings });
+});
+
+// Become host of a listing (Admin only)
+app.get("/admin/becomehost/:listingId", isAdmin, async (req, res) => {
+  try {
+    const listing = await Listing.findById(req.params.listingId);
+    if (!listing) return res.status(404).send("Listing not found");
+
+    listing.owner = req.user._id; // make yourself host
+    await listing.save();
+    res.send({ message: "You are now host of this listing", listing });
+  } catch (err) {
+    res.status(500).send(err);
+  }
 });
 
 app.listen(8080, () => {

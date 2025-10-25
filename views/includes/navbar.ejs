@@ -73,7 +73,7 @@
             <input type="date" name="checkOut" class="form-control">
           </div>
 
-          <!-- Guests removed for a simpler search UI -->
+
         </div>
 
         <div class="d-flex justify-content-end">
@@ -87,16 +87,28 @@
     </div>
   </div>
 </div>
-
-           <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="listings/new">Add Your Home</a>
-        <% if (typeof currentUser === 'undefined' || !currentUser) { %>
-          <a class="nav-link" href="/signup"><b>Sign Up</b></a>
-          <a class="nav-link" href="/login"><b>Login</b></a>
-        <% } else { %>
-          <a class="nav-link" href="/logout"><b>Log Out</b></a>
-        <% } %>
+   
+          <div class="navbar-nav ms-auto d-flex align-items-center gap-3">
+  <% if (user) { %>
+    <!-- User avatar as link to profile -->
+    <a href="/profile">
+      <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white fw-bold" 
+           style="width:40px; height:40px;">
+        <%= user.username.charAt(0).toUpperCase() %>
       </div>
+    </a>
+  <% } %>
+
+  <a class="nav-link" href="/listings/new">Add Your Home</a>
+
+  <% if (!currentUser) { %>
+    <a class="nav-link" href="/signup"><b>Sign Up</b></a>
+    <a class="nav-link" href="/login"><b>Login</b></a>
+  <% } else { %>
+    <a class="nav-link" href="/logout"><b>Log Out</b></a>
+  <% } %>
+</div>
+
     </div>
   </div>
 </nav>

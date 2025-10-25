@@ -183,14 +183,20 @@ module.exports.createListing = async (req, res, next) => {
 
 module.exports.editListing = async (req, res) => {
   const { id } = req.params;
-  const listing = await Listing.findById(id);
+  // If previous middleware attached the listing (e.g. checkListingAuthor), reuse it
+  const listing = req.listing || await Listing.findById(id);
   if (!listing) {
     req.flash('error', 'Listing not found');
     return res.redirect('/listings');
   }
-  if (!listing.owner || String(listing.owner) !== String(req.user._id)) {
-    req.flash('error', 'You do not have permission to edit this listing');
-    return res.redirect(`/listings/${id}`);
+  // If we reached here and req.listing wasn't present, perform owner/admin check
+  if (!req.listing) {
+    if (!listing.owner || String(listing.owner) !== String(req.user._id)) {
+      if (!req.user || !req.user.isAdmin) {
+        req.flash('error', 'You do not have permission to edit this listing');
+        return res.redirect(`/listings/${id}`);
+      }
+    }
   }
   const originalImage = listing && listing.image && listing.image.url ? listing.image.url : '';
   res.render("listings/edit", { listing, originalImage });

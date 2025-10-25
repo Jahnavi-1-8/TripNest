@@ -3,7 +3,7 @@ const router = express.Router();
 const User = require("../models/user");
 const wrapAsync = require('../utils/wrapAsync');
 const passport = require("passport");
-const { saveRedirectUrl } = require('../middleware');
+const { saveRedirectUrl, isLoggedIn } = require('../middleware');
 const userController=require("../controllers/users.js");
 router.route("/signup")
 .get(userController.renderSignUpForm)
@@ -17,5 +17,8 @@ router.route("/login")
 }),userController.logIn);
 
 router.get("/logout", userController.logOut);
+router.get("/profile", isLoggedIn, wrapAsync(userController.renderProfile));
+router.get('/profile/edit', isLoggedIn, userController.renderEditForm);
+router.put('/profile', isLoggedIn, wrapAsync(userController.updateProfile));
 
 module.exports = router;

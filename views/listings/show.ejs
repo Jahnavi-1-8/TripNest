@@ -85,7 +85,7 @@
 </form>
 
 
- <hr/>
+     <hr/>
       <!-- Map -->
       <div class="mt-4">
         <div id="listing-map"
@@ -168,11 +168,56 @@
         <button class="btn btn-outline-dark">Submit</button>
       </form>
       <% } %>
+      <hr class="my-5"/>
+
+<!-- ✅ Host Section -->
+<div class="p-4 shadow-sm rounded" style="background:#fafafa;">
+  <h4 class="fw-bold mb-3">👋 Meet Your Host</h4>
+
+  <p class="mb-1">
+    <strong><%= listing.owner.username %></strong> 
+    <span class="text-warning">⭐ Superhost</span>
+  </p>
+
+  <p class="text-muted small mb-2">
+    Superhosts are experienced, highly rated hosts who are committed
+    to providing great stays.
+  </p>
+
+  <div class="d-flex gap-3 small mb-3">
+    <span><strong><%= listing.owner.totalReviews || 0 %></strong> reviews</span>
+    <span>|</span>
+    <span><strong><%= listing.owner.rating || "5.0" %></strong> rating</span>
+  </div>
+
+  <button id="messageHostBtn" class="btn btn-outline-primary btn-sm">Message Host</button>
+</div>
+
+<!-- ✅ Modal -->
+<div id="messageHostModal" class="modalWindow">
+  <div class="popupBox">
+    <span id="closeModal" class="close-btn">&times;</span>
+    <h5 class="mb-3">📩 Message Host</h5>
+    <p class="mb-2"><strong>Name:</strong> <%= listing.owner.username %></p>
+    <p><strong>Email:</strong> 
+      <a href="mailto:<%= listing.owner.email %>"><%= listing.owner.email %></a>
+    </p>
+  </div>
+</div>
 
       </div>
-
-      
 
       </div> 
     </div> 
   </div>
+  <script>
+  const modal = document.getElementById("messageHostModal");
+  const btn = document.getElementById("messageHostBtn");
+  const closeBtn = document.getElementById("closeModal");
+
+  btn.addEventListener("click", () => modal.style.display = "block");
+  closeBtn.addEventListener("click", () => modal.style.display = "none");
+  window.addEventListener("click", e => {
+    if (e.target === modal) modal.style.display = "none";
+  });
+</script>

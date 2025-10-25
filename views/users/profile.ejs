@@ -1,0 +1,54 @@
+<% layout('/layouts/bolierplate') %>
+<div class="container mt-5">
+  <div class="row">
+    <div class="col-md-4">
+      <!-- Profile Card -->
+      <div class="card shadow-sm text-center p-4">
+        <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center mx-auto mb-3" 
+             style="width:100px; height:100px; font-size:36px; color:white;">
+          <%= user.username.charAt(0).toUpperCase() %>
+        </div>
+        <h3 class="card-title mb-1"><%= user.username %></h3>
+        <p class="text-muted mb-3"><%= user.isAdmin ? "Admin" : "Guest" %></p>
+        <a href="/profile/edit" class="btn btn-primary btn-sm w-75">Edit Profile</a>
+      </div>
+    </div>
+
+    <div class="col-md-8">
+      <!-- Past Trips -->
+      <div class="card shadow-sm mb-3">
+        <div class="card-body">
+          <h5 class="card-title">Past Trips</h5>
+          <% if (trips && trips.length > 0) { %>
+            <ul class="list-group list-group-flush">
+              <% trips.forEach(trip => { %>
+                <li class="list-group-item d-flex justify-content-between">
+                  <span><%= trip.destination %></span>
+                  <small class="text-muted"><%= trip.date %></small>
+                </li>
+              <% }) %>
+            </ul>
+          <% } else { %>
+            <p class="text-muted mb-0">No past trips yet.</p>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- Reviews -->
+      <div class="card shadow-sm mb-3">
+        <div class="card-body">
+          <h5 class="card-title">Reviews I’ve Written</h5>
+          <% if (reviews && reviews.length > 0) { %>
+            <ul class="list-group list-group-flush">
+              <% reviews.forEach(review => { %>
+                  <li class="list-group-item"><%= review.comment || review.text || 'No content' %> — <%= (review.listing && review.listing.title) || '—' %></li>
+              <% }) %>
+            </ul>
+          <% } else { %>
+            <p class="text-muted mb-0">No reviews yet.</p>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

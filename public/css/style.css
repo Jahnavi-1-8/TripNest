@@ -195,5 +195,78 @@ h1{
   border: 1px solid #ddd;
   background: #ffffff;
 }
+/* Host UI */
+.host-card, .p-4.shadow-sm {
+  border: 1px solid #e2e2e2;
+  border-radius: 10px;
+}
+
+/* Modal popup */
+.modalWindow {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 999;
+}
+
+.popupBox {
+  background: #fff;
+  width: 280px;
+  margin: 120px auto;
+  padding: 20px;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 0 12px rgba(0,0,0,0.2);
+}
+
+.close-btn {
+  float: right;
+  cursor: pointer;
+  font-size: 20px;
+}
 
 
+
+.host-card {
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #ddd;
+    margin-top: 25px;
+    background: #fff;
+}
+.host-details {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+.host-avatar {
+    width: 85px;
+    height: 85px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+.superhost {
+    color: #ff385c;
+    font-weight: bold;
+}
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    padding-top: 100px;
+    inset: 0;
+    background-color: rgba(0,0,0,0.5);
+}
+.modal-content {
+    background: #fff;
+    margin: auto;
+    padding: 20px;
+    width: 350px;
+    border-radius: 10px;
+}
+.close {
+    float: right;
+    font-size: 22px;
+    cursor: pointer;
+}

@@ -43,7 +43,7 @@ router.route("/:id")
 .delete(isLoggedIn,checkListingAuthor, wrapAsync(listingController.destroyListing));
 
 //edit route
-router.get("/:id/edit", isLoggedIn, wrapAsync(listingController.editListing));
+router.get("/:id/edit", isLoggedIn, checkListingAuthor, wrapAsync(listingController.editListing));
 
 
 module.exports = router;
