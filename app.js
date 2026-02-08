@@ -1,9 +1,14 @@
-if(process.env.NODE_ENV!= "production"){
-    require('dotenv').config();
+if (process.env.NODE_ENV != "production") {
+  require('dotenv').config();
 }
 const express = require("express");
 const mongoose = require("mongoose");
+const morgan = require('morgan');
+
+// ...
+// ...
 const app = express();
+app.use(morgan('dev'));
 const ejs = require("ejs");
 const path = require("path");
 const session = require("express-session");
@@ -11,8 +16,8 @@ const flash = require("connect-flash");
 const passport = require("passport");
 const LocalStrategy = require("passport-local");
 const User = require("./models/user.js");
-const listingsRoutes= require("./routes/listings.js");
-const reviewsRoutes= require("./routes/reviews.js");
+const listingsRoutes = require("./routes/listings.js");
+const reviewsRoutes = require("./routes/reviews.js");
 const userRoutes = require("./routes/user.js");
 const bookingRoutes = require("./routes/bookings");
 const adminRoutes = require("./routes/admin.js");
@@ -34,20 +39,20 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 const store = MongoStore.create({
   mongoUrl: process.env.ATLASDB_URL,
-  crypto:{
-    secret: process.env.SECRET  
+  crypto: {
+    secret: process.env.SECRET
   },
   touchAfter: 24 * 3600 // time period in seconds
 });
-store.on("error", function(e){
+store.on("error", function (e) {
   console.log("SESSION STORE ERROR", e);
 });
 const sessionOptions = {
-    store: store,
-  secret: process.env.SECRET ,
+  store: store,
+  secret: process.env.SECRET,
   resave: false,
   saveUninitialized: true,
-  cookie:{
+  cookie: {
     httpOnly: true,
     // secure: true, // Uncomment this line when using HTTPS
     expires: Date.now() + 1000 * 60 * 60 * 24 * 7, // 1 week
@@ -61,6 +66,9 @@ app.use(passport.initialize());
 app.use(passport.session());
 passport.use(new LocalStrategy(User.authenticate()));
 passport.serializeUser(User.serializeUser());
+const { globalLimiter } = require("./utils/rateLimiters.js");
+app.use(globalLimiter);
+
 passport.deserializeUser(User.deserializeUser());
 app.use((req, res, next) => {
   res.locals.success = req.flash('success');
@@ -103,8 +111,8 @@ async function main() {
 }
 
 main()
-.then(() => console.log("MongoDB connected"))
-.catch((err) => console.log(err));
+  .then(() => console.log("MongoDB connected"))
+  .catch((err) => console.log(err));
 
 mongoose.connection.on('connected', () => {
   console.log('✅ Mongoose connected to MongoDB');
@@ -147,22 +155,47 @@ app.use((req, res, next) => {
 app.use((err, req, res, next) => {
   const statusCode = err.statusCode || err.status || 500;
   const message = err.message || 'Something went wrong';
-  // Log only server errors (500+) to reduce noise for client errors like 404
+
+  // Log stack trace for server errors
   if (statusCode >= 500) {
-    console.error(err);
-  } else {
-    // For non-server errors, log a concise message (optional)
-    console.warn(`HTTP ${statusCode}: ${message}`);
+    console.error(err.stack);
   }
+
   // Only expose stack traces in non-production environments for server errors
   const exposeError = (process.env.NODE_ENV !== 'production') && statusCode >= 500;
-  res.status(statusCode).render('error', { statusCode, message, err: exposeError ? err : null });
+  res.status(statusCode).render('listings/error.ejs', { message, err: exposeError ? err : null });
 });
 
 
 
 // bookingRoutes mounted earlier with other route modules
 
-app.listen(8080, () => {
+const http = require('http');
+const { Server } = require("socket.io");
+
+const server = http.createServer(app);
+const io = new Server(server);
+
+// Middleware to make 'io' accessible in routers/controllers
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
+
+// Socket.io Connection Logic
+io.on("connection", (socket) => {
+  console.log("A user connected to socket");
+
+  socket.on("joinListing", (listingId) => {
+    socket.join(`listing:${listingId}`);
+    console.log(`User joined listing room: listing:${listingId}`);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("User disconnected from socket");
+  });
+});
+
+server.listen(8080, () => {
   console.log("Server started on port 8080");
 });

@@ -1,13 +1,31 @@
 require('dotenv').config();
-const booking=require('../models/booking.js');
+const booking = require('../models/booking.js');
 const Listing = require('../models/listings');
 const Stripe = require('stripe');
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY || '');
 const BASE_URL = process.env.BASE_URL || 'http://localhost:8080';
-module.exports.createBooking=async (req, res) => {
+
+module.exports.createBooking = async (req, res) => {
   try {
     const listing = await Listing.findById(req.params.id);
     const { checkIn, checkOut, guests } = req.body;
+
+    const ci = new Date(checkIn);
+    const co = new Date(checkOut);
+
+    // Check for overlapping bookings
+    const existingBooking = await booking.findOne({
+      listing: listing._id,
+      $or: [
+        { checkIn: { $lt: co }, checkOut: { $gt: ci } } // Overlap condition: (StartA < EndB) and (EndA > StartB)
+      ],
+      paymentStatus: 'Paid' // Only check paid bookings
+    });
+
+    if (existingBooking) {
+      req.flash('error', 'These dates are already booked. Please choose different dates.');
+      return res.redirect(`/listings/${req.params.id}`);
+    }
 
     // Calculate nights between checkIn and checkOut. Default to 1 night when dates missing/invalid
     let nights = 1;
@@ -42,13 +60,13 @@ module.exports.createBooking=async (req, res) => {
       line_items: [
         {
           price_data: {
-                currency: "inr",
-                product_data: {
-                  name: listing.title,
-                  description: `${nights} night(s) — ${guests || 1} guest(s)`
-                },
-                unit_amount: Math.round(totalPrice * 100),
-              },
+            currency: "inr",
+            product_data: {
+              name: listing.title,
+              description: `${nights} night(s) — ${guests || 1} guest(s)`
+            },
+            unit_amount: Math.round(totalPrice * 100),
+          },
           quantity: 1,
         },
       ],
@@ -74,7 +92,7 @@ module.exports.createBooking=async (req, res) => {
     return res.redirect(`/bookings/${req.params.id}/pay`);
   }
 };
-module.exports.renderPaymentPage=async (req, res) => {
+module.exports.renderPaymentPage = async (req, res) => {
   try {
     const listing = await Listing.findById(req.params.id);
     if (!listing) return res.status(404).send('Listing not found');
@@ -85,9 +103,9 @@ module.exports.renderPaymentPage=async (req, res) => {
     res.redirect('/');
   }
 };
-module.exports.renderSuccessPage=async (req, res) => {
+module.exports.renderSuccessPage = async (req, res) => {
   res.render('bookings/success');
 };
-module.exports.renderCancelPage=async (req, res) => {
+module.exports.renderCancelPage = async (req, res) => {
   res.render('bookings/cancel');
 };

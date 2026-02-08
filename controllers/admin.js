@@ -1,12 +1,12 @@
 const Listing = require("../models/listings.js");
 const { isAdmin } = require("../middleware.js");
 
-module.exports.viewAllListings =  async (req, res) => {
+module.exports.viewAllListings = async (req, res) => {
   const listings = await Listing.find().populate("owner");
   res.render("admin/listings", { listings });
 };
 
-module.exports.adminBecomeHost =async (req, res) => {
+module.exports.adminBecomeHost = async (req, res) => {
   try {
     const listing = await Listing.findById(req.params.listingId);
     if (!listing) return res.status(404).send("Listing not found");

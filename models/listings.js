@@ -5,11 +5,11 @@ const Review = require('./review.js');
 const Schema = mongoose.Schema;
 const ListingSchema = new Schema({
   title: {
-    type:String,
+    type: String,
     required: true
   },
   description: String,
-   image: {
+  image: {
     filename: { type: String, default: "listingimage" },
     url: {
       type: String,
@@ -38,11 +38,11 @@ const ListingSchema = new Schema({
   reviews: [
     {
       type: Schema.Types.ObjectId,
-        ref: 'Review',
+      ref: 'Review',
     },
-    ],
+  ],
 });
-ListingSchema.post('findOneAndDelete', async function(doc) {
+ListingSchema.post('findOneAndDelete', async function (doc) {
   if (doc) {
     await Review.deleteMany({
       _id: {
@@ -51,5 +51,11 @@ ListingSchema.post('findOneAndDelete', async function(doc) {
     });
   }
 });
+
+// Indexes for performance
+ListingSchema.index({ location: 1, country: 1 }); // Compound index for location search
+ListingSchema.index({ title: 'text' });           // Text index for title search
+ListingSchema.index({ price: 1 });                // Index for sorting/filtering by price
+
 const Listing = mongoose.model('Listing', ListingSchema);
 module.exports = Listing;

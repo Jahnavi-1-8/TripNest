@@ -1,107 +1,128 @@
 <% layout('layouts/bolierplate') %>
 
-<div class="container my-5">
+  <div class="container my-5">
     <h1 class="mb-4 fw-bold"></h1>
 
-    <% if (filters && filters.location && (!allListings || allListings.length === 0)) { %>
-        <div class="alert alert-warning alert-dismissible fade show" role="alert">
-            <strong>No results</strong> — we couldn't find any listings matching "<%= filters.location %>".
-            <button type="button" class="btn-close" aria-label="Close" id="no-results-close"></button>
-            <script>
-                // when the user clicks the close button, go back to unfiltered listings
-                document.addEventListener('DOMContentLoaded', function () {
-                    const btn = document.getElementById('no-results-close');
-                    if (!btn) return;
-                    btn.addEventListener('click', function () { window.location = '/listings'; });
-                });
-            </script>
-        </div>
-    <% } %>
-
-  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-    <% for (let listing of allListings) { %>
-      <div class="col">
-        <a href="/listings/<%= listing._id %>" class="card-link text-decoration-none text-dark">
-          <div class="card listing-card h-100 shadow-sm">
-            
-            <img 
-              src="<%= listing.image && listing.image.url ? listing.image.url : 'https://via.placeholder.com/400x250?text=No+Image' %>" 
-              class="card-img-top" 
-              alt="<%= listing.title%>"
-            >
-            
-            <div class="card-body d-flex flex-column">
-              <h5 class="card-title mb-2"><%= listing.title %></h5>
-              
-              <p class="card-text flex-grow-1 text-muted">
-                <%= listing.description %>
-              </p>
-
-              <p class="card-text mt-auto">
-                <strong>
-                 &#8377;<%= listing.price ? listing.price.toLocaleString('en-IN') : 'N/A' %>/night
-                <!-- <i class="tax-info">+18% GST </i> -->
-                </strong> · 
-                <%= listing.location  %>, 
-                <%= listing.country %>
-              </p>
-
-              <a href="/listings/<%= listing._id %>" class="btn btn-primary mt-2 w-100">View Details</a>
-            </div>
-          </div>
-        </a>
+    <% if (filters && filters.location && (!allListings || allListings.length===0)) { %>
+      <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        <strong>No results</strong> — we couldn't find any listings matching "<%= filters.location %>".
+          <button type="button" class="btn-close" aria-label="Close" id="no-results-close"></button>
+          <script>
+            // when the user clicks the close button, go back to unfiltered listings
+            document.addEventListener('DOMContentLoaded', function () {
+              const btn = document.getElementById('no-results-close');
+              if (!btn) return;
+              btn.addEventListener('click', function () { window.location = '/listings'; });
+            });
+          </script>
       </div>
-    <% } %>
+      <% } %>
+
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+          <% for (let listing of allListings) { %>
+            <div class="col">
+              <a href="/listings/<%= listing._id %>" class="card-link text-decoration-none text-dark">
+                <div class="card listing-card h-100 shadow-sm">
+
+                  <img
+                    src="<%= listing.image && listing.image.url ? listing.image.url : 'https://via.placeholder.com/400x250?text=No+Image' %>"
+                    class="card-img-top" alt="<%= listing.title%>">
+
+                  <div class="card-body d-flex flex-column">
+                    <h5 class="card-title mb-2">
+                      <%= listing.title %>
+                    </h5>
+
+                    <p class="card-text flex-grow-1 text-muted">
+                      <%= listing.description %>
+                    </p>
+
+                    <p class="card-text mt-auto">
+                      <strong>
+                        &#8377;<%= listing.price ? listing.price.toLocaleString('en-IN') : 'N/A' %>/night
+                          <!-- <i class="tax-info">+18% GST </i> -->
+                      </strong> ·
+                      <%= listing.location %>,
+                        <%= listing.country %>
+                    </p>
+
+                    <a href="/listings/<%= listing._id %>" class="btn btn-primary mt-2 w-100">View Details</a>
+                  </div>
+                </div>
+              </a>
+            </div>
+            <% } %>
+        </div>
+
+        <!-- Pagination -->
+        <% if (typeof currentPage !=='undefined' && typeof totalPages !=='undefined' && totalPages> 1) { %>
+          <div class="d-flex justify-content-center mt-5">
+            <nav aria-label="Page navigation">
+              <ul class="pagination">
+                <li class="page-item <%= currentPage == 1 ? 'disabled' : '' %>">
+                  <a class="page-link"
+                    href="/listings?page=<%= currentPage - 1 %><%= filters && filters.location ? '&location=' + filters.location : '' %><%= filters && filters.guests ? '&guests=' + filters.guests : '' %><%= filters && filters.checkin ? '&checkin=' + filters.checkin : '' %><%= filters && filters.checkout ? '&checkout=' + filters.checkout : '' %>">Previous</a>
+                </li>
+                <li class="page-item disabled">
+                  <span class="page-link">Page <%= currentPage %> of <%= totalPages %></span>
+                </li>
+                <li class="page-item <%= currentPage == totalPages ? 'disabled' : '' %>">
+                  <a class="page-link"
+                    href="/listings?page=<%= currentPage + 1 %><%= filters && filters.location ? '&location=' + filters.location : '' %><%= filters && filters.guests ? '&guests=' + filters.guests : '' %><%= filters && filters.checkin ? '&checkin=' + filters.checkin : '' %><%= filters && filters.checkout ? '&checkout=' + filters.checkout : '' %>">Next</a>
+                </li>
+              </ul>
+            </nav>
+          </div>
+          <% } %>
   </div>
-</div>
-<script>
+  <script>
     // Prevent submitting completely empty searches; redirect to base listings instead
     document.addEventListener('DOMContentLoaded', function () {
-        const form = document.getElementById('search-form');
-        if (!form) return;
-        form.addEventListener('submit', function (e) {
-            const loc = (form.elements['location'] && form.elements['location'].value || '').trim();
-            const checkin = (form.elements['checkin'] && form.elements['checkin'].value || '').trim();
-            const checkout = (form.elements['checkout'] && form.elements['checkout'].value || '').trim();
-            const guests = (form.elements['guests'] && form.elements['guests'].value || '').trim();
-            if (!loc && !checkin && !checkout && !guests) {
-                e.preventDefault();
-                // navigate back to unfiltered listings
-                window.location.href = '/listings';
-            }
+      const form = document.getElementById('search-form');
+      if (!form) return;
+      form.addEventListener('submit', function (e) {
+        const loc = (form.elements['location'] && form.elements['location'].value || '').trim();
+        const checkin = (form.elements['checkin'] && form.elements['checkin'].value || '').trim();
+        const checkout = (form.elements['checkout'] && form.elements['checkout'].value || '').trim();
+        const guests = (form.elements['guests'] && form.elements['guests'].value || '').trim();
+        if (!loc && !checkin && !checkout && !guests) {
+          e.preventDefault();
+          // navigate back to unfiltered listings
+          window.location.href = '/listings';
+        }
+      });
+      const clearBtn = document.getElementById('clear-search');
+      if (clearBtn) {
+        clearBtn.addEventListener('click', function () {
+          form.reset();
+          window.location.href = '/listings';
         });
-            const clearBtn = document.getElementById('clear-search');
-            if (clearBtn) {
-                clearBtn.addEventListener('click', function () {
-                    form.reset();
-                    window.location.href = '/listings';
-                });
-            }
+      }
     });
 
-        let taxSwitch=document.getElementById('switchCheckDefault');
-    taxSwitch.addEventListener('change',function(){
-        let prices=document.getElementsByClassName("card-text mt-auto");
-        if(taxSwitch.checked){
-            for(let i=0;i<prices.length;i++){
-                let priceText=prices[i].innerHTML;
-                let priceMatch=priceText.match(/₹([\d,]+)/);
-                if(priceMatch){
-                    let price=parseInt(priceMatch[1].replace(/,/g,''));
-                    let taxedPrice=price*1.18;
-                    prices[i].innerHTML=priceText.replace(/₹[\d,]+/,'₹'+taxedPrice.toLocaleString('en-IN',{maximumFractionDigits:2}));
-                }
-            }
-        }else{
-            for(let i=0;i<prices.length;i++){
-                let priceText=prices[i].innerHTML;
-                let priceMatch=priceText.match(/₹([\d,]+)/);
-                if(priceMatch){
-                    let price=parseInt(priceMatch[1].replace(/,/g,''));
-                    let originalPrice=price/1.18;
-                    prices[i].innerHTML=priceText.replace(/₹[\d,]+/,'₹'+originalPrice.toLocaleString('en-IN',{maximumFractionDigits:2}));
-                }
-            }
+    let taxSwitch = document.getElementById('switchCheckDefault');
+    taxSwitch.addEventListener('change', function () {
+      let prices = document.getElementsByClassName("card-text mt-auto");
+      if (taxSwitch.checked) {
+        for (let i = 0; i < prices.length; i++) {
+          let priceText = prices[i].innerHTML;
+          let priceMatch = priceText.match(/₹([\d,]+)/);
+          if (priceMatch) {
+            let price = parseInt(priceMatch[1].replace(/,/g, ''));
+            let taxedPrice = price * 1.18;
+            prices[i].innerHTML = priceText.replace(/₹[\d,]+/, '₹' + taxedPrice.toLocaleString('en-IN', { maximumFractionDigits: 2 }));
+          }
         }
+      } else {
+        for (let i = 0; i < prices.length; i++) {
+          let priceText = prices[i].innerHTML;
+          let priceMatch = priceText.match(/₹([\d,]+)/);
+          if (priceMatch) {
+            let price = parseInt(priceMatch[1].replace(/,/g, ''));
+            let originalPrice = price / 1.18;
+            prices[i].innerHTML = priceText.replace(/₹[\d,]+/, '₹' + originalPrice.toLocaleString('en-IN', { maximumFractionDigits: 2 }));
+          }
+        }
+      }
     });
-</script>
+  </script>

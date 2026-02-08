@@ -4,13 +4,48 @@ const ExpressError = require("../utils/ExpressError.js");
 const { cloudinary } = require('../cloudConfig.js');
 const fs = require('fs');
 const path = require('path');
+const redisClient = require('../utils/redis');
 
 
 // Index handler (list all listings) - ensure this is exported so routes can use it
 module.exports.index = async (req, res, next) => {
   try {
-    // Accept search params on index so search results can render on the same page
     const { location, guests, checkin, checkout } = req.query || {};
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 8;
+    const skip = (page - 1) * limit;
+
+    // Define cache key based on query params to support basic filtering
+    const isDefaultView = !location && !guests && !checkin && !checkout;
+
+    // Cache Key Strategy:
+    // - Default view: 'listings:all:p:1'
+    // - Filtered view: 'listings:q:<base64-params>:p:1'
+    let cacheKey = 'listings:all';
+    if (!isDefaultView) {
+      // Create a stable key from sorted query params
+      const params = new URLSearchParams({ location: location || '', guests: guests || '', checkin: checkin || '', checkout: checkout || '' });
+      params.sort();
+      cacheKey = `listings:q:${Buffer.from(params.toString()).toString('base64')}`;
+    }
+    // Add page to cache key
+    cacheKey += `:p:${page}`;
+
+    if (redisClient && redisClient.isOpen) {
+      const cachedListings = await redisClient.get(cacheKey);
+      if (cachedListings) {
+        console.log(`Redis Cache Hit: ${cacheKey}`);
+        const result = typeof cachedListings === 'string' ? JSON.parse(cachedListings) : cachedListings;
+        // Result stores both listings and metadata
+        return res.render('listings/index', {
+          allListings: result.listings,
+          filters: { location: location || '', guests: guests || '', checkin: checkin || '', checkout: checkout || '' },
+          currentPage: result.currentPage,
+          totalPages: result.totalPages
+        });
+      }
+    }
+
     let filters = {};
     if (location) {
       const regex = { $regex: location, $options: 'i' };
@@ -24,10 +59,31 @@ module.exports.index = async (req, res, next) => {
     }
     if (guests) filters.guests = { $gte: parseInt(guests, 10) };
 
-    const listings = await Listing.find(filters);
+    const totalListings = await Listing.countDocuments(filters);
+    const totalPages = Math.ceil(totalListings / limit);
+
+    const listings = await Listing.find(filters).skip(skip).limit(limit);
+
+    if (redisClient && redisClient.isOpen) {
+      // Store result structure with metadata
+      const cacheValue = {
+        listings,
+        currentPage: page,
+        totalPages
+      };
+      // TTL: 5 mins for search results
+      await redisClient.set(cacheKey, JSON.stringify(cacheValue), { EX: 300 });
+      console.log(`Redis Cache Miss: Set ${cacheKey} (TTL 300s)`);
+    }
+
     // forward raw query values for pre-filling the search form
     const filterValues = { location: location || '', guests: guests || '', checkin: checkin || '', checkout: checkout || '' };
-    return res.render('listings/index', { allListings: listings, filters: filterValues });
+    return res.render('listings/index', {
+      allListings: listings,
+      filters: filterValues,
+      currentPage: page,
+      totalPages: totalPages
+    });
   } catch (err) {
     return next(err);
   }
@@ -81,16 +137,37 @@ module.exports.showListing = async (req, res, next) => {
   if (!mongoose.Types.ObjectId.isValid(id)) {
     return next(new ExpressError('Page Not Found', 404));
   }
-  const listing = await Listing.findById(id).populate({ path: 'reviews', populate: { path: "author" } }).populate('owner');
+
+  const cacheKey = `listing:${id}`;
+  let listing;
+
+  if (redisClient && redisClient.isOpen) {
+    const cachedListing = await redisClient.get(cacheKey);
+    if (cachedListing) {
+      console.log(`Redis Cache Hit: ${cacheKey}`);
+      listing = typeof cachedListing === 'string' ? JSON.parse(cachedListing) : cachedListing;
+    }
+  }
+
+  if (!listing) {
+    listing = await Listing.findById(id).populate({ path: 'reviews', populate: { path: "author" } }).populate('owner');
+    if (listing) {
+      if (redisClient && redisClient.isOpen) {
+        await redisClient.set(cacheKey, JSON.stringify(listing), { EX: 3600 });
+        console.log(`Redis Cache Miss: Set ${cacheKey}`);
+      }
+    }
+  }
+
   if (!listing) {
     req.flash('error', 'Listing not found');
     return res.redirect('/listings');
   }
-let originalImage = listing.image.url;
-if (originalImage && originalImage.includes('/upload/')) {
-  originalImage = originalImage.replace('/upload/', '/upload/w_400,h_300,c_fill/');
-}
-res.render("listings/show", { listing, originalImage });
+  let originalImage = listing.image.url;
+  if (originalImage && originalImage.includes('/upload/')) {
+    originalImage = originalImage.replace('/upload/', '/upload/w_400,h_300,c_fill/');
+  }
+  res.render("listings/show", { listing, originalImage });
 
 };
 
@@ -174,6 +251,13 @@ module.exports.createListing = async (req, res, next) => {
     }
 
     await newListing.save();
+
+    // Invalidate listings:all cache
+    if (redisClient && redisClient.isOpen) {
+      await redisClient.del('listings:all');
+      console.log('Redis Cache Invalidated: listings:all');
+    }
+
     req.flash('success', 'Successfully created a new listing!');
     res.redirect(`/listings/${newListing._id}`);
   } catch (e) {
@@ -257,6 +341,14 @@ module.exports.updateListing = async (req, res) => {
     } catch (err) {
       console.warn('Geocoding/coords failed on update:', err);
     }
+
+    // Invalidate cache
+    if (redisClient && redisClient.isOpen) {
+      await redisClient.del('listings:all');
+      await redisClient.del(`listing:${id}`);
+      console.log(`Redis Cache Invalidated: listing:${id} and listings:all`);
+    }
+
     req.flash('success', 'Successfully Updated a listing!');
     return res.redirect(`/listings/${updatedListing._id}`);
   } catch (e) {
@@ -272,6 +364,14 @@ module.exports.destroyListing = async (req, res) => {
   if (!deletedListing) {
     return res.status(404).send("Listing not found");
   }
+
+  // Invalidate cache
+  if (redisClient && redisClient.isOpen) {
+    await redisClient.del('listings:all');
+    await redisClient.del(`listing:${id}`);
+    console.log(`Redis Cache Invalidated: listing:${id} and listings:all`);
+  }
+
   req.flash('success', 'Successfully Deleted a listing!');
   res.redirect("/listings");
 };

@@ -1,7 +1,9 @@
 const mongoose = require("mongoose");
 const Review = require("../models/review.js");
 const Listing = require("../models/listings.js");
-module.exports.createReview=async (req, res) => {
+const redisClient = require('../utils/redis');
+
+module.exports.createReview = async (req, res) => {
   let { id } = req.params;
   // fallback to hidden form field if req.params is not set for some reason
   if (!id && req.body && req.body.listingId) id = req.body.listingId;
@@ -27,15 +29,29 @@ module.exports.createReview=async (req, res) => {
 
   listing.reviews.push(newReview);
   await listing.save();
+
+  // Invalidate cache
+  if (redisClient && redisClient.isOpen) {
+    await redisClient.del(`listing:${id}`);
+    console.log(`Redis Cache Invalidated: listing:${id}`);
+  }
+
   req.flash('success', 'Successfully created a new Review!');
   res.redirect(`/listings/${listing._id}`);
 };
-module.exports.destroyReview=async (req, res) => {
+module.exports.destroyReview = async (req, res) => {
   // The parent router mounts this at /listings/:id/reviews, so the listing id
   // is available as req.params.id (not listingId). Use that name or alias it.
   const { id, reviewId } = req.params;
   await Listing.findByIdAndUpdate(id, { $pull: { reviews: reviewId } });
   await Review.findByIdAndDelete(reviewId);
+
+  // Invalidate cache
+  if (redisClient && redisClient.isOpen) {
+    await redisClient.del(`listing:${id}`);
+    console.log(`Redis Cache Invalidated: listing:${id}`);
+  }
+
   req.flash('success', 'Successfully deleted the Review!');
   res.redirect(`/listings/${id}`);
 };

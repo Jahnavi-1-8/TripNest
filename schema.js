@@ -1,4 +1,4 @@
-const Joi=require('joi');
+const Joi = require('joi');
 const listingSchema = Joi.object({
     title: Joi.string().required(),
     description: Joi.string().required(),
@@ -22,4 +22,14 @@ const reviewSchema = Joi.object({
     listingId: Joi.string().optional()
 }).unknown(true); // allow extra top-level keys (hidden inputs etc.)
 
-module.exports = { listingSchema, reviewSchema };
+const userSchema = Joi.object({
+    username: Joi.string().required(),
+    email: Joi.string().email().required(),
+    password: Joi.string().min(8).pattern(new RegExp('^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{8,}$')).required()
+        .messages({
+            'string.pattern.base': 'Password must contain at least one letter and one number.',
+            'string.min': 'Password must be at least 8 characters long.'
+        })
+}).unknown(true);
+
+module.exports = { listingSchema, reviewSchema, userSchema };
